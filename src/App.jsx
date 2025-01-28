@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { UserProvider } from '@/UserContext.jsx';
-import ProtectedRoute from '@/ProtectedRoute.jsx';
+
 import HomePage from './pages/HomePage';
 import ItemPage from './pages/ItemPage';
 import Dashboard from './pages/Dashboard';
@@ -14,14 +14,13 @@ import About from './pages/About';
 import Account from './pages/Account';
 import Help from './pages/Help';
 import NotFound from './pages/NotFound';
-import AuthPage from './pages/AuthPage';
+
 
 const router = createBrowserRouter([
   { path: '/', element: <HomePage /> },
-  { path: '/auth', element: <AuthPage /> },
+  
   {
     path: '/',
-    element: <ProtectedRoute />,
     children: [
       { path: 'items', element: <ItemPage /> },
       { path: 'help', element: <Help /> },
