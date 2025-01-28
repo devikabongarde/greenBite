@@ -106,8 +106,8 @@ export function AppSidebar(props) {
                   <Command className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Food Flux</span>
-                  <span className="truncate text-xs">Enterprise</span>
+                  <span className="truncate font-semibold">GreenBite</span>
+                  <span className="truncate text-xs">Food Waste Manager</span>
                 </div>
               </a>
             </SidebarMenuButton>
