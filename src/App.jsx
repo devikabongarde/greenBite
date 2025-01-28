@@ -14,6 +14,7 @@ import About from './pages/About';
 import Account from './pages/Account';
 import Help from './pages/Help';
 import NotFound from './pages/NotFound';
+import AuthPage from './pages/AuthPage';
 
 
 const router = createBrowserRouter([
@@ -24,6 +25,7 @@ const router = createBrowserRouter([
     children: [
       { path: 'items', element: <ItemPage /> },
       { path: 'help', element: <Help /> },
+      { path: 'auth', element: <AuthPage /> },
       { path: 'dashboard', element: <Dashboard /> },
       { path: 'achievements', element: <Achievements /> },
       { path: 'donations', element: <Ngodonations /> },

@@ -60,8 +60,8 @@ const faqs = [
 
 export default function Help() {
     const [user, setUser] = useState({
-        name: 'John Doe',
-        username: 'johndoe',
+        name: 'DVAS',
+        username: 'devi-ava-vin-shiv',
         avatarUrl: '/placeholder.svg?height=50&width=50'
     })
 
