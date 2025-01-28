@@ -24,7 +24,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { logOut } from "@/authService";  
+
 import { useNavigate } from 'react-router-dom'; 
 import { useAuth } from '@/UserContext';
 
@@ -34,14 +34,7 @@ export function NavUser() {
   const { user } = useAuth();  
 
   // Handle logout functionality
-  const handleLogout = async () => {
-    try {
-      await logOut();  // Log out the user
-      navigate('/');  // Redirect to the homepage after logout
-    } catch (error) {
-      console.error("Logout failed", error);  // Log any errors during logout
-    }
-  };
+
 
   return (
     <SidebarMenu>
