@@ -12,10 +12,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { signUp, signIn } from "@/authService.js";
-import { ref, set } from "firebase/database";  // Correct import for Realtime Database
+import { signUp, signIn, signInWithGoogle } from "@/authService.js";
+import { collection, doc, setDoc } from "firebase/firestore"; // Correct import for Firestore
 import { useNavigate } from "react-router-dom";
-import { database } from "@/firebaseConfig";  // Use the correct reference for Realtime Database
+import { db } from "@/firebaseConfig"; // Import the Firestore database reference
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -64,28 +64,51 @@ const AuthPage = () => {
       const result = await signUp(email, password);
       const user = result.user;
 
-      // Correct Realtime Database usage: Use the `database` reference here
-      const userRef = ref(database, `${isNgo ? "ngos" : "users"}/${user.uid}`);
-      await set(userRef, {
+      // Correct Firestore usage: Save user data in Firestore
+      const userRef = doc(collection(db, isNgo ? "ngos" : "users"), user.uid);
+      await setDoc(userRef, {
         email: user.email,
         userId: user.uid,
         isNgo: isNgo, // Save if user is an NGO or not
-        createdAt: new Date().toISOString(),  // You can store a date string
+        createdAt: new Date().toISOString(), // Store a date string
       });
 
       toast.success("Account created successfully");
       navigate(isNgo ? "/" : "/");
     } catch (err) {
       console.log("Sign up error:", err);
-      toast.error("Failed to create account");
+      if (err.code === "auth/email-already-in-use") {
+        toast.error("Email already in use");
+      } else {
+        toast.error("Failed to create account");
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogleSignIn = () => {
-    // Implement Google Sign-In logic here
-    console.log("Google Sign-In clicked");
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      const user = await signInWithGoogle();
+
+      // Save user data in Firestore
+      const userRef = doc(collection(db, user.isNgo ? "ngos" : "users"), user.uid);
+      await setDoc(userRef, {
+        email: user.email,
+        userId: user.uid,
+        isNgo: user.isNgo, // Save if user is an NGO or not
+        createdAt: new Date().toISOString(),
+      });
+
+      toast.success("Logged in with Google successfully");
+      navigate(user.isNgo ? "/" : "/");
+    } catch (err) {
+      console.log("Google sign-in error:", err);
+      toast.error("Google sign-in failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -109,7 +132,7 @@ const AuthPage = () => {
                     id="login-email"
                     name="email"
                     type="email"
-                    placeholder="krsna@foodflux.com"
+                    placeholder="devi@abc.com"
                     required
                   />
                 </div>
