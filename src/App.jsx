@@ -1,31 +1,32 @@
-import React from 'react';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { UserProvider } from '@/UserContext.jsx';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
-import HomePage from './pages/HomePage';
-import ItemPage from './pages/ItemPage';
-import Dashboard from './pages/Dashboard';
-import Achievements from './pages/Achievements';
-import Ngodonations from './pages/Ngodonations';
-import Crowdfunding from './pages/Crowdfunding';
-import Chatbot from './pages/Chatbot';
-import Documentation from './pages/Documentation';
 import About from './pages/About';
 import Account from './pages/Account';
-import Help from './pages/Help';
-import NotFound from './pages/NotFound';
+import Achievements from './pages/Achievements';
 import AuthPage from './pages/AuthPage';
+import Chatbot from './pages/Chatbot';
+import Crowdfunding from './pages/Crowdfunding';
+import Dashboard from './pages/Dashboard';
+import Documentation from './pages/Documentation';
+import Help from './pages/Help';
+import HomePage from './pages/HomePage';
+import ItemPage from './pages/ItemPage';
+import Ngodonations from './pages/Ngodonations';
+import NotFound from './pages/NotFound';
+import ProtectedRoute from './ProtectedRoute';
 
 
 const router = createBrowserRouter([
   { path: '/', element: <HomePage /> },
-  
+  { path: '/auth', element: <AuthPage /> },
   {
-    path: '/',
+    path: '/', element : <ProtectedRoute/>,
+
     children: [
       { path: 'items', element: <ItemPage /> },
       { path: 'help', element: <Help /> },
-      { path: 'auth', element: <AuthPage /> },
+      
       { path: 'dashboard', element: <Dashboard /> },
       { path: 'achievements', element: <Achievements /> },
       { path: 'donations', element: <Ngodonations /> },

@@ -1,27 +1,17 @@
-import React from 'react'
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
+import { AppSidebar } from "@/components/ui/app-sidebar"
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/ui/app-sidebar"
 
 
 
-import { FileText, AlertCircle, Barcode, Bell, MapPin, TrendingUp, Gift } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { AlertCircle, Barcode, Bell, Gift, MapPin, TrendingUp } from "lucide-react"
 
-import { Link } from "react-router-dom";
+import { Link } from "react-router-dom"
 export default function HomePage() {
   return (
     <SidebarProvider>

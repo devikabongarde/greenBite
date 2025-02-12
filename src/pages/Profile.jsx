@@ -11,9 +11,9 @@ import { CameraIcon } from 'lucide-react'
 
 export default function Profile() {
     const [profile, setProfile] = useState({
-        name: 'Devika Bongarde',
-        username: 'debong',
-        email: 'devi@abc.com',
+        name: 'John Doe',
+        username: 'johndoe',
+        email: 'john@example.com',
         phone: '+1 (555) 123-4567',
         bio: 'Food enthusiast and amateur chef. Love trying new recipes and sharing my culinary adventures!',
         avatarUrl: '/placeholder.svg?height=100&width=100'

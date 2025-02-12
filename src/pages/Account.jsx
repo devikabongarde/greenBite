@@ -1,60 +1,54 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Label } from '@/components/ui/label';
-import { useAuth } from '@/UserContext';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
-import { db } from '@/firebaseConfig';
-import { toast } from 'react-toastify';
+import { useState, useEffect } from 'react'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Label } from "@/components/ui/label"
+import { useAuth } from "@/UserContext"
+import { doc, updateDoc, getDoc } from "firebase/firestore"
+import { db } from "@/firebaseConfig"
+import { toast } from "react-toastify"
 
 export default function Account() {
-  const { user, setUser } = useAuth(); // Access user data and setUser to update context
-  const [isEditing, setIsEditing] = useState(false);
+  const { user, setUser } = useAuth() // Access user data and setUser to update context
+  const [isEditing, setIsEditing] = useState(false)
   const [profileData, setProfileData] = useState({
     name: '',
     email: '',
     address: '',
     contact: ''
-  });
+  })
 
   useEffect(() => {
     // Fetch user profile data from Firestore on component mount
     if (user?.uid) {
-      const userRef = doc(db, 'users', user.uid);
+      const userRef = doc(db, "users", user.uid)
       getDoc(userRef)
         .then((docSnap) => {
           if (docSnap.exists()) {
-            const data = docSnap.data();
-            setProfileData({
-              name: data.name || '',
-              email: data.email || '',
-              address: data.address || '',
-              contact: data.contact || ''
-            });
+            setProfileData(docSnap.data())
           } else {
-            console.log('No such document!');
+            console.log("No such document!")
           }
         })
         .catch((error) => {
-          console.error('Error fetching document:', error);
-        });
+          console.error("Error fetching document:", error)
+        })
     }
-  }, [user?.uid]);
+  }, [user?.uid])
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setProfileData((prevData) => ({
+    const { name, value } = e.target
+    setProfileData(prevData => ({
       ...prevData,
       [name]: value
-    }));
-  };
+    }))
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault()
     if (user?.uid) {
-      const userRef = doc(db, 'users', user.uid);
+      const userRef = doc(db, "users", user.uid)
 
       try {
         // Update the user profile in Firestore
@@ -63,25 +57,25 @@ export default function Account() {
           email: profileData.email,
           address: profileData.address,
           contact: profileData.contact
-        });
+        })
 
         // Update the context data
-        setUser((prevUser) => ({
+        setUser(prevUser => ({
           ...prevUser,
           name: profileData.name,
           email: profileData.email
-        }));
+        }))
 
-        toast.success('Profile updated successfully');
-        setIsEditing(false);
+        toast.success("Profile updated successfully")
+        setIsEditing(false)
       } catch (error) {
-        console.error('Error updating profile:', error.message);
-        toast.error('Error updating profile');
+        console.error("Error updating profile:", error.message)
+        toast.error("Error updating profile")
       }
     } else {
-      toast.error('User not found');
+      toast.error("User not found")
     }
-  };
+  }
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -166,5 +160,5 @@ export default function Account() {
         </p>
       </CardFooter>
     </Card>
-  );
+  )
 }

@@ -1,23 +1,30 @@
 // Import the functions you need from the SDKs
+
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth"; // Removed duplicate getAuth import
-import { getFirestore } from "firebase/firestore";
+import { getAuth, GoogleAuthProvider} from "firebase/auth"; // Removed duplicate getAuth import
+import { getFunctions } from "firebase/functions";
+import { getFirestore } from "firebase/firestore"; // Firestore import, if needed elsewhere
+import { getDatabase } from "firebase/database"; // Realtime Database import
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSy...Vwc_aA",
-  authDomain: "greenbite-1adf6.firebaseapp.com",
-  projectId: "greenbite-1adf6",
-  storageBucket: "greenbite-1adf6.appspot.com",
-  messagingSenderId: "735907114125",
-  appId: "1:735907114125:web:593e7e0274f7d44023c6c4",
-  measurementId: "G-2NVWEL1LPF",
+  apiKey: "AIzaSyAJUrNLTrC4eUH7H1cOT-BxuMl2xvKKBeo",
+  authDomain: "greenbite-254e4.firebaseapp.com",
+  databaseURL: "https://greenbite-254e4-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "greenbite-254e4",
+  storageBucket: "greenbite-254e4.firebasestorage.app",
+  messagingSenderId: "188773355781",
+  appId: "1:188773355781:web:4291fedd5a729b170ba76c"
 };
 
+
+// Initialize Firebase
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Export Firebase services
-export const auth = getAuth(app); // For authentication
-export const db = getFirestore(app); // For Firestore (Database)
-export { GoogleAuthProvider, signInWithPopup };
+// Initialize Firebase services
+export const auth = getAuth(app); // Authentication
+export const functions = getFunctions(app); // Firebase Functions (if needed)
+export const db = getFirestore(app); // Firestore (if needed)
+export const database = getDatabase(app); // Realtime Database
+export const provider = new GoogleAuthProvider(); // Google Auth

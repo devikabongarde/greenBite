@@ -1,34 +1,32 @@
+import { AppSidebar } from "@/components/ui/app-sidebar"
 import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbSeparator,
-  } from "@/components/ui/breadcrumb"
-  import { Separator } from "@/components/ui/separator"
-  import {
-    SidebarInset,
-    SidebarProvider,
-    SidebarTrigger,
-  } from "@/components/ui/sidebar"
-  import { AppSidebar } from "@/components/ui/app-sidebar"
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
  
-  import { PieChart, Pie, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
-  import React, { useState,useEffect } from 'react'
-  import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-  import { Button } from "@/components/ui/button"
-  import { Input } from "@/components/ui/input"
-  import { Label } from "@/components/ui/label"
-  import { Textarea } from "@/components/ui/textarea"
-  import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-  import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-  import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-  import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-  import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-  import { ScrollArea } from "@/components/ui/scroll-area"
   import { Badge } from "@/components/ui/badge"
-  import { Camera, Search } from 'lucide-react'
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
+import { Camera, Search } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8']
   
 function Ngodonations() {

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { AppSidebar } from "@/components/ui/app-sidebar";
+import { Badge } from "@/components/ui/badge";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -6,16 +7,22 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/ui/app-sidebar";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -24,29 +31,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { differenceInDays, format } from "date-fns";
+import {
+  onValue,
+  push,
+  ref,
+  set,
+  update
+} from "firebase/database";
 import { Calendar as CalendarIcon, Trash2 } from "lucide-react";
-import { format, differenceInDays } from "date-fns";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getAuth } from "firebase/auth";
-import {
-  collection,
-  addDoc,
-  doc,
-  deleteDoc,
-  onSnapshot,
-  query,
-  where,
-} from "firebase/firestore";
-import { db } from "@/firebaseConfig" // Updated import to use Firestore
+import { useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { database } from "../firebaseConfig.js";
 
 function ItemPage() {
   const [foodItems, setFoodItems] = useState([]);
@@ -55,23 +52,20 @@ function ItemPage() {
     quantity: "",
     expiryDate: "",
   });
-  const auth = getAuth();
-  const userId = auth.currentUser ? auth.currentUser.uid : null;
+  
+  // Assuming you have a user authentication system in place, get the current user's ID
+  const userId = "userId"; // Replace with dynamic user ID from Firebase Authentication (e.g., `auth.currentUser.uid`)
 
   useEffect(() => {
-    if (!userId) return; // Ensure user is logged in
-    const foodItemsQuery = query(
-      collection(db, "foodItems"),
-      where("userId", "==", userId)
-    );
-
-    const unsubscribe = onSnapshot(foodItemsQuery, (snapshot) => {
-      const items = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const foodItemsRef = ref(database, `foodItems/${userId}`);
+    onValue(foodItemsRef, (snapshot) => {
+      const items = [];
+      snapshot.forEach((childSnapshot) => {
+        items.push({ id: childSnapshot.key, ...childSnapshot.val() });
+      });
       setFoodItems(items);
     });
-
-    return () => unsubscribe(); // Cleanup listener on unmount
-  }, [userId]);
+  }, [userId]); // Use `userId` as a dependency to update the data when the user changes
 
   const getExpiryStatus = (expiryDate) => {
     if (!expiryDate) return "unknown";
@@ -81,42 +75,43 @@ function ItemPage() {
     return "fresh";
   };
 
-  const handleAddItem = async (e) => {
+  const toggleAlert = (itemId, currentStatus) => {
+    const itemRef = ref(database, `foodItems/${userId}/${itemId}`);
+    update(itemRef, { alertEnabled: !currentStatus });
+  };
+
+  // Handle adding a new food item to Firebase
+  const handleAddItem = (e) => {
     e.preventDefault();
-    if (!userId) {
-      toast.error("User not logged in.");
-      return;
-    }
     if (!newItem.name || !newItem.quantity || !newItem.expiryDate) {
       toast.error("Please fill in all fields");
       return;
     }
 
-    try {
-      await addDoc(collection(db, "foodItems"), {
-        userId,
-        ...newItem,
-        expiryDate: newItem.expiryDate.toISOString(),
-        quantity: parseInt(newItem.quantity, 10),
+    const foodItemsRef = ref(database, `foodItems/${userId}`);
+    const newFoodItemRef = push(foodItemsRef);
+    const foodItem = { ...newItem };
+    foodItem.expiryDate = format(newItem.expiryDate, "yyyy/MM/dd");
+    foodItem.quantity = parseInt(newItem.quantity);
+
+    set(newFoodItemRef, foodItem)
+      .then(() => {
+        toast.success("Food item added successfully!");
+        setNewItem({
+          name: "",
+          quantity: "",
+          expiryDate: null,
+        });
+      })
+      .catch((error) => {
+        toast.error("Failed to add food item: " + error.message);
       });
-      toast.success("Food item added successfully!");
-      setNewItem({ name: "", quantity: "", expiryDate: "" });
-    } catch (error) {
-      toast.error("Failed to add food item: " + error.message);
-    }
   };
 
-  const handleDeleteItem = async (itemId) => {
-    if (!userId) {
-      toast.error("User not logged in.");
-      return;
-    }
-    try {
-      await deleteDoc(doc(db, "foodItems", itemId));
-      toast.success("Item deleted successfully!");
-    } catch (error) {
-      toast.error("Failed to delete item: " + error.message);
-    }
+  // Handle deleting an item from Firebase
+  const handleDeleteItem = (itemId) => {
+    const itemRef = ref(database, `foodItems/${userId}/${itemId}`);
+    set(itemRef, null);
   };
 
   return (
@@ -148,52 +143,57 @@ function ItemPage() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleAddItem} className="space-y-4">
-                  <div className="max-w-2xl">
-                    <Label htmlFor="itemName">Food Item Name</Label>
-                    <Input
-                      id="itemName"
-                      value={newItem.name}
-                      onChange={(e) =>
-                        setNewItem({ ...newItem, name: e.target.value })
-                      }
-                      placeholder="Enter food item name"
-                    />
-                    <Label htmlFor="quantity">Quantity</Label>
-                    <Input
-                      id="quantity"
-                      type="number"
-                      value={newItem.quantity}
-                      onChange={(e) =>
-                        setNewItem({ ...newItem, quantity: e.target.value })
-                      }
-                      placeholder="Number of items"
-                    />
-                    <Label htmlFor="expiryDate">Expiry Date</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={`w-full justify-start text-left font-normal ${
-                            !newItem.expiryDate && "text-muted-foreground"
-                          }`}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {newItem.expiryDate
-                            ? format(newItem.expiryDate, "PPP")
-                            : "Pick a date"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={newItem.expiryDate}
-                          onSelect={(date) =>
-                            setNewItem({ ...newItem, expiryDate: date })
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
+                  <div className=" max-w-2xl">
+                    <div>
+                      <Label htmlFor="itemName">Food Item Name</Label>
+                      <Input
+                        id="itemName"
+                        value={newItem.name}
+                        onChange={(e) =>
+                          setNewItem({ ...newItem, name: e.target.value })
+                        }
+                        placeholder="Enter food item name"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="quantity">quantity</Label>
+                      <Input
+                        id="quantity"
+                        type="number"
+                        value={newItem.quantity}
+                        onChange={(e) =>
+                          setNewItem({ ...newItem, quantity: e.target.value })
+                        }
+                        placeholder="Number of items"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="expiryDate">Expiry Date</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant={"outline"}
+                            className={`w-full justify-start text-left font-normal ${!newItem.expiryDate && "text-muted-foreground"
+                              }`}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {newItem.expiryDate
+                              ? format(newItem.expiryDate, "PPP")
+                              : "Pick a date"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={newItem.expiryDate}
+                            onSelect={(date) =>
+                              setNewItem({ ...newItem, expiryDate: date })
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
                   </div>
                   <Button type="submit" className="w-full">
                     Add Food Item
@@ -211,10 +211,9 @@ function ItemPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Food Item</TableHead>
-                      <TableHead>Quantity</TableHead>
+                      <TableHead>quantity</TableHead>
                       <TableHead>Expiry Date</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
