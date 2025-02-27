@@ -1,26 +1,43 @@
+import { useEffect, useState, useRef } from "react";
 import { AppSidebar } from "@/components/ui/app-sidebar";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { onValue, ref } from "firebase/database";
-import { useEffect, useState } from "react";
+import { differenceInDays, format } from "date-fns";
+import { onValue, push, ref, set, update } from "firebase/database";
 import { database } from "../firebaseConfig.js";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 
 function DashboardPage() {
   const [foodItems, setFoodItems] = useState([]);
-  const userId = "userId"; // Replace with dynamic user ID
+  const [expiryAlerts, setExpiryAlerts] = useState([]);
+  const userId = "userId";
 
   useEffect(() => {
     const foodItemsRef = ref(database, `foodItems/${userId}`);
     onValue(foodItemsRef, (snapshot) => {
       const items = [];
+      const alerts = [];
       snapshot.forEach((childSnapshot) => {
         const item = { id: childSnapshot.key, ...childSnapshot.val() };
         items.push(item);
+        if (item.expiryDate) {
+          const daysLeft = differenceInDays(new Date(item.expiryDate), new Date());
+          if (daysLeft > 0 && daysLeft <= 7) {
+            alerts.push({ message: `${item.name} is expiring in ${daysLeft} days!`, type: "warning" });
+          } else if (daysLeft < 0) {
+            alerts.push({ message: `${item.name} has expired!`, type: "error" });
+          }
+        }
       });
       setFoodItems(items);
+      setExpiryAlerts(alerts);
     });
   }, [userId]);
 
@@ -36,16 +53,13 @@ function DashboardPage() {
 
   return (
     <SidebarProvider>
-      <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-        </header>
-        <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-          
-          <Card className="shadow-lg">
+    <div className="flex">
+      
+      <AppSidebar />
+      <div className="flex-1 p-6">
+        <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
+        <Card className="shadow-lg">
             <CardHeader>
               <CardTitle>Total Food Items</CardTitle>
             </CardHeader>
@@ -88,42 +102,66 @@ function DashboardPage() {
           </Card>
         </div>
         <div className="p-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Food Inventory Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Food Item</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>Expiry Date</TableHead>
-                    <TableHead>Status</TableHead>
+       
+
+        {/* Expiring Soon & Expired Notifications */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Expiring Soon & Expired Items</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {expiryAlerts.length > 0 ? (
+              <ul className="list-disc pl-6 space-y-2">
+                {expiryAlerts.map((alert, index) => (
+                  <li key={index} className={`text-${alert.type === "error" ? "red" : "yellow"}-600`}>
+                    {alert.message}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-500">No expiring soon or expired items.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Food Inventory Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Food Inventory</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Food Item</TableHead>
+                  <TableHead>Quantity</TableHead>
+                  <TableHead>Expiry Date</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {foodItems.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{item.name}</TableCell>
+                    <TableCell>{item.quantity}</TableCell>
+                    <TableCell>
+                      {item.expiryDate ? format(new Date(item.expiryDate), "PPP") : "No Date"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={differenceInDays(new Date(item.expiryDate), new Date()) < 0 ? "destructive" : "default"}>
+                        {differenceInDays(new Date(item.expiryDate), new Date()) < 0 ? "Expired" : "Fresh"}
+                      </Badge>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {foodItems.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>{item.name}</TableCell>
-                      <TableCell>{item.quantity}</TableCell>
-                      <TableCell>{item.expiryDate || "No Date"}</TableCell>
-                      <TableCell>{
-                        new Date(item.expiryDate) < new Date()
-                          ? "Expired"
-                          : new Date(item.expiryDate) - new Date() <= 7 * 24 * 60 * 60 * 1000
-                          ? "Expiring Soon"
-                          : "Fresh"
-                      }</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  </SidebarInset>
+  </SidebarProvider>
   );
 }
 
