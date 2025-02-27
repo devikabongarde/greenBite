@@ -44,10 +44,7 @@ import { useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { database } from "../firebaseConfig.js";
-import axios from "axios";
-import { getAuth } from "firebase/auth";
-import { getDatabase} from "firebase/database";
-
+import { useRef } from "react";
 
 function ItemPage() {
   const [foodItems, setFoodItems] = useState([]);
@@ -61,16 +58,47 @@ function ItemPage() {
   // Assuming you have a user authentication system in place, get the current user's ID
   const userId = "userId"; // Replace with dynamic user ID from Firebase Authentication (e.g., `auth.currentUser.uid`)
 
-  useEffect(() => {
-    const foodItemsRef = ref(database, `foodItems/${userId}`);
-    onValue(foodItemsRef, (snapshot) => {
-      const items = [];
-      snapshot.forEach((childSnapshot) => {
-        items.push({ id: childSnapshot.key, ...childSnapshot.val() });
-      });
-      setFoodItems(items);
+
+
+const alertedItemsRef = useRef(new Set()); // Store already alerted items
+
+useEffect(() => {
+  const foodItemsRef = ref(database, `foodItems/${userId}`);
+  onValue(foodItemsRef, (snapshot) => {
+    const items = [];
+    snapshot.forEach((childSnapshot) => {
+      const item = { id: childSnapshot.key, ...childSnapshot.val() };
+      items.push(item);
     });
-  }, [userId]); // Use `userId` as a dependency to update the data when the user changes
+    setFoodItems(items);
+
+    // Check for expiring or expired items
+    items.forEach((item) => {
+      if (item.expiryDate) {
+        const daysLeft = differenceInDays(new Date(item.expiryDate), new Date());
+
+        if (!alertedItemsRef.current.has(item.id)) {
+          if (daysLeft > 0 && daysLeft <= 7) {
+            // Expiring soon
+            toast.warn(`⚠️ ${item.name} is expiring in ${daysLeft} days!`, {
+              position: "top-center",
+              autoClose: 5000,
+            });
+          } else if (daysLeft < 0) {
+            // Already expired
+            toast.error(`❌ ${item.name} has expired!`, {
+              position: "top-center",
+              autoClose: 5000,
+            });
+          }
+          alertedItemsRef.current.add(item.id); // Mark as alerted
+        }
+      }
+    });
+  });
+}, [userId]);
+
+  
 
   const getExpiryStatus = (expiryDate) => {
     if (!expiryDate) return "unknown";
