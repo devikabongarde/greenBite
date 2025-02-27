@@ -138,7 +138,7 @@ isNgo: isNgo, // Save if user is an NGO or not
                     id="login-email"
                     name="email"
                     type="email"
-                    placeholder="krsna@foodflux.com"
+                    placeholder="devi@greenbite.com"
                     required
                   />
                 </div>
@@ -164,7 +164,7 @@ isNgo: isNgo, // Save if user is an NGO or not
                     id="signup-email"
                     name="email"
                     type="email"
-                    placeholder="krsna@foodflux.com"
+                    placeholder="devi@greenbite.com"
                     required
                   />
                 </div>

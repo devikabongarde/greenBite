@@ -37,22 +37,27 @@ import {
   push,
   ref,
   set,
-  update
+  update,
 } from "firebase/database";
-import { Calendar as CalendarIcon, Trash2 } from "lucide-react";
+import { Calendar as CalendarIcon, Trash2, Upload } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { database } from "../firebaseConfig.js";
+import axios from "axios";
+import { getAuth } from "firebase/auth";
+import { getDatabase} from "firebase/database";
+
 
 function ItemPage() {
   const [foodItems, setFoodItems] = useState([]);
   const [newItem, setNewItem] = useState({
     name: "",
     quantity: "",
-    expiryDate: "",
+    expiryDate: null,
   });
-  
+  const [isUploading, setIsUploading] = useState(false); // To handle loading state during image upload
+
   // Assuming you have a user authentication system in place, get the current user's ID
   const userId = "userId"; // Replace with dynamic user ID from Firebase Authentication (e.g., `auth.currentUser.uid`)
 
@@ -108,10 +113,47 @@ function ItemPage() {
       });
   };
 
+
   // Handle deleting an item from Firebase
   const handleDeleteItem = (itemId) => {
     const itemRef = ref(database, `foodItems/${userId}/${itemId}`);
     set(itemRef, null);
+  };
+
+
+  // Handle image upload and expiry date extraction
+  const handleImageUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+  
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+  
+    try {
+      const response = await fetch("http://127.0.0.1:5000/upload", {
+        method: "POST",
+        body: formData,
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to process image");
+      }
+  
+      const data = await response.json();
+  
+      if (data.expiry_date) {
+        const expiryDate = new Date(data.expiry_date);
+        setNewItem({ ...newItem, expiryDate });
+        toast.success("Expiry date extracted successfully!");
+      } else {
+        toast.error("No expiry date found in the image.");
+      }
+    } catch (error) {
+      toast.error("Failed to process image: " + error.message);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -143,7 +185,7 @@ function ItemPage() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleAddItem} className="space-y-4">
-                  <div className=" max-w-2xl">
+                  <div className="max-w-2xl">
                     <div>
                       <Label htmlFor="itemName">Food Item Name</Label>
                       <Input
@@ -156,7 +198,7 @@ function ItemPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="quantity">quantity</Label>
+                      <Label htmlFor="quantity">Quantity</Label>
                       <Input
                         id="quantity"
                         type="number"
@@ -173,8 +215,9 @@ function ItemPage() {
                         <PopoverTrigger asChild>
                           <Button
                             variant={"outline"}
-                            className={`w-full justify-start text-left font-normal ${!newItem.expiryDate && "text-muted-foreground"
-                              }`}
+                            className={`w-full justify-start text-left font-normal ${
+                              !newItem.expiryDate && "text-muted-foreground"
+                            }`}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {newItem.expiryDate
@@ -194,6 +237,17 @@ function ItemPage() {
                         </PopoverContent>
                       </Popover>
                     </div>
+                    <div>
+                      <Label htmlFor="imageUpload">Upload Expiry Date Image</Label>
+                      <Input
+                        id="imageUpload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        disabled={isUploading}
+                      />
+                      {isUploading && <p className="text-sm text-gray-500">Processing image...</p>}
+                    </div>
                   </div>
                   <Button type="submit" className="w-full">
                     Add Food Item
@@ -211,9 +265,10 @@ function ItemPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Food Item</TableHead>
-                      <TableHead>quantity</TableHead>
+                      <TableHead>Quantity</TableHead>
                       <TableHead>Expiry Date</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
