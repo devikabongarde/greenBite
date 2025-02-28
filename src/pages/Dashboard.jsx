@@ -92,6 +92,8 @@ function DashboardPage() {
       <div className="flex flex-wrap gap-4">
   {/* First row with three cards */}
   <div className="flex w-full gap-4">
+  <div className="flex-wrap gap-4">
+  </div>
     <Card className="shadow-lg bg-blue-100 flex-1">
       <CardHeader>
         <CardTitle>Total Food Items</CardTitle>
@@ -124,10 +126,14 @@ function DashboardPage() {
         <p className="text-3xl font-bold">{fresh}</p>
       </CardContent>
     </Card>
+    <div className="flex-wrap gap-4">
+    </div>
   </div>
+ 
 
   {/* Second row (Inventory Overview) */}
   <div className="w-full">
+ 
   <Card>
   <CardHeader>
     <CardTitle>Inventory Overview</CardTitle>

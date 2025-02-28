@@ -32,8 +32,26 @@ import {
 
 
 const teamMembers = [
-    
+    {
+        name: "Devika Bongarde",
+        role: "Developer",
+        email: "devikabongarde@gmail.com",
+        image: "/path-to-image.jpg"
+    },
+    {
+        name: "Vinayak Kadate",
+        role: "Developer",
+        email: "kadatevinayak@gmail.com",
+        image: "/path-to-image.jpg"
+    },
+    {
+        name: "Avadhoot Gurav",
+        role: "Developer",
+        email: "avadhootgurav2309@gmail.com",
+        image: "/path-to-image.jpg"
+    },
 ]
+
 
 const faqs = [
     {

@@ -10,6 +10,7 @@ import {
   Users,
   PieChart,
   Send,
+  UserRound,
   Award,
   Settings2,
   LayoutDashboard,
@@ -33,9 +34,9 @@ import {
 
 const data = {
   user: {
-    name: "addylovesdiddy",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    name: "devikabongarde",
+    email: "d@example.com",
+    avatar: UserRound,
   },
   navMain: [
     {
@@ -64,12 +65,12 @@ const data = {
       url: "/achievements",
       icon: Award,
     },
-    {
+    /* {
       title: "Documentation",
       url: "/docs",
       icon: BookOpen,
 
-    },
+    }, */
     {
       title: "About",
       url: "/about",

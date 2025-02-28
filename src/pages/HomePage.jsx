@@ -1,18 +1,26 @@
-import { AppSidebar } from "@/components/ui/app-sidebar"
+import { AppSidebar } from "@/components/ui/app-sidebar";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/firebaseConfig";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertCircle,
+  Barcode,
+  Bell,
+  Gift,
+  MapPin,
+  TrendingUp,
+} from "lucide-react";
 
-
-
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { AlertCircle, Barcode, Bell, Gift, MapPin, TrendingUp } from "lucide-react"
-
-import { Link } from "react-router-dom"
+import { Link } from "react-router-dom";
 export default function HomePage() {
+  const [user] = useAuthState(auth); // Retrieves the logged-in user
+
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -20,7 +28,6 @@ export default function HomePage() {
         <header className="flex h-16 shrink-0 items-center gap-2">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
-
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
@@ -33,14 +40,19 @@ export default function HomePage() {
                       Reduce Food Waste with GreenBite
                     </h1>
                     <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400">
-                      Track your food, get timely alerts, and discover delicious recipes for your leftovers.
+                      Track your food, get timely alerts, and discover delicious
+                      recipes for your leftovers.
                     </p>
                   </div>
                   <div className="space-x-4">
-                  <Button>
-                    <Link to="/auth">Get Started</Link>
-                  </Button>
-                    <Button variant="outline"><Link href="/about">Learn More</Link></Button>
+                    <Button>
+                      <Link to={user ? "/dashboard" : "/auth"}>
+                        Get Started
+                      </Link>
+                    </Button>
+                    <Button variant="outline">
+                      <Link to="/about">Learn More</Link>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -48,7 +60,6 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 auto-rows-min gap-4 md:grid-cols-2 lg:grid-cols-3">
-
             <div className=" rounded-xl bg-muted/50">
               <Card className="hover:scale-105 transition-transform">
                 <CardHeader>
@@ -56,8 +67,8 @@ export default function HomePage() {
                   <CardTitle>Food Item Logging</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  Log food items with details like name, quantity, expiry
-                  date, and storage location. 
+                  Log food items with details like name, quantity, expiry date,
+                  and storage location.
                 </CardContent>
               </Card>
             </div>
@@ -68,7 +79,8 @@ export default function HomePage() {
                   <CardTitle>Expiry Alerts</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  Receive reminders for items nearing expiry and get recipe suggestions to avoid waste.
+                  Receive reminders for items nearing expiry and get recipe
+                  suggestions to avoid waste.
                 </CardContent>
               </Card>
             </div>
@@ -80,7 +92,8 @@ export default function HomePage() {
                   <CardTitle>Donation Feature</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  List surplus food for donation and connect with local shelters or food banks.
+                  List surplus food for donation and connect with local shelters
+                  or food banks.
                 </CardContent>
               </Card>
             </div>
@@ -91,7 +104,8 @@ export default function HomePage() {
                   <CardTitle>Location-Based Matching</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  Match donations with nearby organizations using location-based algorithms.
+                  Match donations with nearby organizations using location-based
+                  algorithms.
                 </CardContent>
               </Card>
             </div>
@@ -103,7 +117,8 @@ export default function HomePage() {
                   <CardTitle>Waste Reduction Dashboard</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  Track saved food, donations, and environmental impact with real-time analytics.
+                  Track saved food, donations, and environmental impact with
+                  real-time analytics.
                 </CardContent>
               </Card>
             </div>
@@ -114,15 +129,13 @@ export default function HomePage() {
                   <CardTitle>Gamification & Rewards</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  Earn badges and points for reducing waste and making donations. Join the leaderboard!
+                  Earn badges and points for reducing waste and making
+                  donations. Join the leaderboard!
                 </CardContent>
               </Card>
             </div>
-
           </div>
-          <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min" >
-
-          </div>
+          <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min"></div>
         </div>
       </SidebarInset>
     </SidebarProvider>
