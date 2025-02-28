@@ -32,13 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { differenceInDays, format } from "date-fns";
-import {
-  onValue,
-  push,
-  ref,
-  set,
-  update,
-} from "firebase/database";
+import { onValue, push, ref, set, update } from "firebase/database";
 import { Calendar as CalendarIcon, Trash2, Upload } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
@@ -58,58 +52,92 @@ function ItemPage() {
   // Assuming you have a user authentication system in place, get the current user's ID
   const userId = "userId"; // Replace with dynamic user ID from Firebase Authentication (e.g., `auth.currentUser.uid`)
 
+  const alertedItemsRef = useRef(new Set()); // Store already alerted items
 
+  useEffect(() => {
+    const foodItemsRef = ref(database, `foodItems/${userId}`);
+    onValue(foodItemsRef, (snapshot) => {
+      const items = [];
+      snapshot.forEach((childSnapshot) => {
+        const item = { id: childSnapshot.key, ...childSnapshot.val() };
+        items.push(item);
+      });
+      setFoodItems(items);
 
-const alertedItemsRef = useRef(new Set()); // Store already alerted items
+      // Check for expiring or expired items
+      items.forEach((item) => {
+        if (item.expiryDate) {
+          const daysLeft = differenceInDays(
+            new Date(item.expiryDate),
+            new Date()
+          );
 
-useEffect(() => {
-  const foodItemsRef = ref(database, `foodItems/${userId}`);
-  onValue(foodItemsRef, (snapshot) => {
-    const items = [];
-    snapshot.forEach((childSnapshot) => {
-      const item = { id: childSnapshot.key, ...childSnapshot.val() };
-      items.push(item);
-    });
-    setFoodItems(items);
-
-    // Check for expiring or expired items
-    items.forEach((item) => {
-      if (item.expiryDate) {
-        const daysLeft = differenceInDays(new Date(item.expiryDate), new Date());
-
-        if (!alertedItemsRef.current.has(item.id)) {
-          if (daysLeft > 0 && daysLeft <= 7) {
-            // Expiring soon
-            toast.warn(`⚠️ ${item.name} is expiring in ${daysLeft} days!`, {
-              position: "top-center",
-              autoClose: 5000,
-            });
-          } else if (daysLeft < 0) {
-            // Already expired
-            toast.error(`❌ ${item.name} has expired!`, {
-              position: "top-center",
-              autoClose: 5000,
-            });
+          if (!alertedItemsRef.current.has(item.id)) {
+            if (daysLeft > 0 && daysLeft <= 7) {
+              // Expiring soon
+              toast.warn(`⚠️ ${item.name} is expiring in ${daysLeft} days!`, {
+                position: "top-center",
+                autoClose: 5000,
+              });
+            } else if (daysLeft < 0) {
+              // Already expired
+              toast.error(`❌ ${item.name} has expired!`, {
+                position: "top-center",
+                autoClose: 5000,
+              });
+            }
+            alertedItemsRef.current.add(item.id); // Mark as alerted
           }
-          alertedItemsRef.current.add(item.id); // Mark as alerted
         }
-      }
+      });
     });
-  });
-}, [userId]);
+  }, [userId]);
 
-  
+  const [editItem, setEditItem] = useState(null); // Store the item being edited
+  const [editingItem, setEditingItem] = useState(null);
 
-const getExpiryStatus = (expiryDate) => {
-  if (!expiryDate) return { label: "Unknown", color: "bg-gray-500 text-white" };
-  
-  const daysLeft = differenceInDays(new Date(expiryDate), new Date());
+  const handleEditClick = (item) => {
+    setNewItem({
+      name: item.name,
+      quantity: item.quantity,
+      expiryDate: new Date(item.expiryDate),
+    });
+    setEditingItem(item.id); // Store the item's ID to update instead of adding
+  };
 
-  if (daysLeft < 0) return { label: "Expired", color: "bg-red-700 text-white" };
-  if (daysLeft <= 7) return { label: "Expiring Soon", color: "bg-yellow-400 text-black" };
-  
-  return { label: "Fresh", color: "bg-green-800 text-white" };
-};
+  const handleUpdateItem = (e) => {
+    e.preventDefault();
+    if (!editItem) return;
+
+    const itemRef = ref(database, `foodItems/${userId}/${editItem.id}`);
+    update(itemRef, {
+      name: newItem.name,
+      quantity: parseInt(newItem.quantity),
+      expiryDate: format(newItem.expiryDate, "yyyy/MM/dd"),
+    })
+      .then(() => {
+        toast.success("Food item updated successfully!");
+        setNewItem({ name: "", quantity: "", expiryDate: null });
+        setEditItem(null);
+      })
+      .catch((error) => {
+        toast.error("Failed to update item: " + error.message);
+      });
+  };
+
+  const getExpiryStatus = (expiryDate) => {
+    if (!expiryDate)
+      return { label: "Unknown", color: "bg-gray-500 text-white" };
+
+    const daysLeft = differenceInDays(new Date(expiryDate), new Date());
+
+    if (daysLeft < 0)
+      return { label: "Expired", color: "bg-red-700 text-white" };
+    if (daysLeft <= 7)
+      return { label: "Expiring Soon", color: "bg-yellow-400 text-black" };
+
+    return { label: "Fresh", color: "bg-green-800 text-white" };
+  };
 
   const toggleAlert = (itemId, currentStatus) => {
     const itemRef = ref(database, `foodItems/${userId}/${itemId}`);
@@ -117,33 +145,51 @@ const getExpiryStatus = (expiryDate) => {
   };
 
   // Handle adding a new food item to Firebase
-  const handleAddItem = (e) => {
+  const handleSaveItem = (e) => {
     e.preventDefault();
     if (!newItem.name || !newItem.quantity || !newItem.expiryDate) {
       toast.error("Please fill in all fields");
       return;
     }
 
-    const foodItemsRef = ref(database, `foodItems/${userId}`);
-    const newFoodItemRef = push(foodItemsRef);
-    const foodItem = { ...newItem };
-    foodItem.expiryDate = format(newItem.expiryDate, "yyyy/MM/dd");
-    foodItem.quantity = parseInt(newItem.quantity);
+    const formattedExpiryDate = format(newItem.expiryDate, "yyyy/MM/dd");
 
-    set(newFoodItemRef, foodItem)
-      .then(() => {
-        toast.success("Food item added successfully!");
-        setNewItem({
-          name: "",
-          quantity: "",
-          expiryDate: null,
-        });
+    if (editingItem) {
+      // If an item is being edited, update it
+      const itemRef = ref(database, `foodItems/${userId}/${editingItem}`);
+      update(itemRef, {
+        name: newItem.name,
+        quantity: parseInt(newItem.quantity),
+        expiryDate: formattedExpiryDate,
       })
-      .catch((error) => {
-        toast.error("Failed to add food item: " + error.message);
-      });
-  };
+        .then(() => {
+          toast.success("Food item updated successfully!");
+          setEditingItem(null);
+        })
+        .catch((error) => {
+          toast.error("Failed to update item: " + error.message);
+        });
+    } else {
+      // Otherwise, add a new item
+      const foodItemsRef = ref(database, `foodItems/${userId}`);
+      const newFoodItemRef = push(foodItemsRef);
 
+      set(newFoodItemRef, {
+        name: newItem.name,
+        quantity: parseInt(newItem.quantity),
+        expiryDate: formattedExpiryDate,
+      })
+        .then(() => {
+          toast.success("Food item added successfully!");
+        })
+        .catch((error) => {
+          toast.error("Failed to add food item: " + error.message);
+        });
+    }
+
+    // Clear form after saving
+    setNewItem({ name: "", quantity: "", expiryDate: null });
+  };
 
   // Handle deleting an item from Firebase
   const handleDeleteItem = (itemId) => {
@@ -151,28 +197,27 @@ const getExpiryStatus = (expiryDate) => {
     set(itemRef, null);
   };
 
-
   // Handle image upload and expiry date extraction
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-  
+
     setIsUploading(true);
     const formData = new FormData();
     formData.append("file", file);
-  
+
     try {
       const response = await fetch("http://127.0.0.1:5000/upload", {
         method: "POST",
         body: formData,
       });
-  
+
       if (!response.ok) {
         throw new Error("Failed to process image");
       }
-  
+
       const data = await response.json();
-  
+
       if (data.expiry_date) {
         const expiryDate = new Date(data.expiry_date);
         setNewItem({ ...newItem, expiryDate });
@@ -215,7 +260,7 @@ const getExpiryStatus = (expiryDate) => {
                 <CardTitle>Add New Food Item</CardTitle>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleAddItem} className="space-y-4">
+                <form onSubmit={handleSaveItem} className="space-y-4">
                   <div className="max-w-2xl">
                     <div>
                       <Label htmlFor="itemName">Food Item Name</Label>
@@ -269,7 +314,9 @@ const getExpiryStatus = (expiryDate) => {
                       </Popover>
                     </div>
                     <div>
-                      <Label htmlFor="imageUpload">Upload Expiry Date Image</Label>
+                      <Label htmlFor="imageUpload">
+                        Upload Expiry Date Image
+                      </Label>
                       <Input
                         id="imageUpload"
                         type="file"
@@ -277,11 +324,15 @@ const getExpiryStatus = (expiryDate) => {
                         onChange={handleImageUpload}
                         disabled={isUploading}
                       />
-                      {isUploading && <p className="text-sm text-gray-500">Processing image...</p>}
+                      {isUploading && (
+                        <p className="text-sm text-gray-500">
+                          Processing image...
+                        </p>
+                      )}
                     </div>
                   </div>
                   <Button type="submit" className="w-full">
-                    Add Food Item
+                    {editingItem ? "Update Food Item" : "Add Food Item"}
                   </Button>
                 </form>
               </CardContent>
@@ -313,11 +364,20 @@ const getExpiryStatus = (expiryDate) => {
                             : "No Date"}
                         </TableCell>
                         <TableCell>
-                        <Badge className={getExpiryStatus(item.expiryDate).color}>
+                          <Badge
+                            className={getExpiryStatus(item.expiryDate).color}
+                          >
                             {getExpiryStatus(item.expiryDate).label}
-                        </Badge>
+                          </Badge>
                         </TableCell>
                         <TableCell>
+                          <Button
+                            variant="outline"
+                            className="mr-2 hover:bg-blue-200 hover:text-white"
+                            onClick={() => handleEditClick(item)}
+                          >
+                            ✏️
+                          </Button>
                           <Button
                             variant="outline"
                             className="hover:bg-red-200 hover:text-white"
