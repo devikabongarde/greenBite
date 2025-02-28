@@ -100,13 +100,16 @@ useEffect(() => {
 
   
 
-  const getExpiryStatus = (expiryDate) => {
-    if (!expiryDate) return "unknown";
-    const daysLeft = differenceInDays(new Date(expiryDate), new Date());
-    if (daysLeft < 0) return "expired";
-    if (daysLeft <= 7) return "expiring-soon";
-    return "fresh";
-  };
+const getExpiryStatus = (expiryDate) => {
+  if (!expiryDate) return { label: "Unknown", color: "bg-gray-500 text-white" };
+  
+  const daysLeft = differenceInDays(new Date(expiryDate), new Date());
+
+  if (daysLeft < 0) return { label: "Expired", color: "bg-red-700 text-white" };
+  if (daysLeft <= 7) return { label: "Expiring Soon", color: "bg-yellow-400 text-black" };
+  
+  return { label: "Fresh", color: "bg-green-800 text-white" };
+};
 
   const toggleAlert = (itemId, currentStatus) => {
     const itemRef = ref(database, `foodItems/${userId}/${itemId}`);
@@ -310,9 +313,9 @@ useEffect(() => {
                             : "No Date"}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={getExpiryStatus(item.expiryDate)}>
-                            {getExpiryStatus(item.expiryDate)}
-                          </Badge>
+                        <Badge className={getExpiryStatus(item.expiryDate).color}>
+                            {getExpiryStatus(item.expiryDate).label}
+                        </Badge>
                         </TableCell>
                         <TableCell>
                           <Button
