@@ -2,8 +2,9 @@
 import * as React from "react"
 import {
   BookOpen,
-  Bot,
+  CookingPot,
   Command,
+  Utensils,
   Frame,
   LifeBuoy,
   Users,
@@ -54,9 +55,9 @@ const data = {
       icon: Users,
     },
     {
-      title: "Chatbot",
+      title: "Recipe Generator",
       url: "/chatbot",
-      icon: Bot,
+      icon: CookingPot,
     },
     {
       title: "Achievements",
@@ -88,7 +89,7 @@ const data = {
     {
       name: "Food items",
       url: "/items",
-      icon: Frame,
+      icon: Utensils,
     },
     
   ],
