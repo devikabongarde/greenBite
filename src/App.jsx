@@ -12,9 +12,10 @@ import Documentation from './pages/Documentation';
 import Help from './pages/Help';
 import HomePage from './pages/HomePage';
 import ItemPage from './pages/ItemPage';
-import Ngodonations from './pages/Ngodonations';
+import Ngodonations from './pages/DonationPage';
 import NotFound from './pages/NotFound';
 import ProtectedRoute from './ProtectedRoute';
+import NGOPage from './pages/NGOPage';
 
 
 const router = createBrowserRouter([
@@ -26,7 +27,7 @@ const router = createBrowserRouter([
     children: [
       { path: 'items', element: <ItemPage /> },
       { path: 'help', element: <Help /> },
-      
+      { path: 'ngo', element: <NGOPage /> },
       { path: 'dashboard', element: <Dashboard /> },
       { path: 'achievements', element: <Achievements /> },
       { path: 'donations', element: <Ngodonations /> },
