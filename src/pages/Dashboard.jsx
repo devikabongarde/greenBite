@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { differenceInDays, format } from "date-fns";
 import { onValue, push, ref, set, update } from "firebase/database";
-import { database } from "../firebaseConfig.js";
+import { database,auth } from "../firebaseConfig.js";
 import {
   SidebarInset,
   SidebarProvider,
@@ -17,13 +17,15 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbS
 import { Separator } from "@/components/ui/separator";
 import { Cell } from "recharts";
 
+
 function DashboardPage() {
   const [foodItems, setFoodItems] = useState([]);
   const [expiryAlerts, setExpiryAlerts] = useState([]);
-  const userId = "userId";
+  const user = auth.currentUser;
+  const userId = user ? user.uid : null;
 
   useEffect(() => {
-    const foodItemsRef = ref(database, `foodItems/${userId}`);
+    const foodItemsRef = ref(database, `users/${userId}/foodItems`);
     onValue(foodItemsRef, (snapshot) => {
       const items = [];
       const alerts = [];

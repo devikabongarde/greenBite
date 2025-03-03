@@ -17,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { onValue, ref } from "firebase/database";
-import { database } from "../firebaseConfig.js";
+import { database, auth } from "../firebaseConfig.js";
 
  
 function Chatbot() {
@@ -26,10 +26,11 @@ function Chatbot() {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const userId = "userId"; // Replace with actual user ID
+  const user = auth.currentUser;
+   const userId = user ? user.uid : null;
 
   useEffect(() => {
-    const foodItemsRef = ref(database, `foodItems/${userId}`);
+    const foodItemsRef = ref(database, `users/${userId}/foodItems`);
     onValue(foodItemsRef, (snapshot) => {
       const items = [];
       snapshot.forEach((childSnapshot) => {

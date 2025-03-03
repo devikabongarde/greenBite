@@ -37,8 +37,9 @@ import { Calendar as CalendarIcon, Trash2, Upload } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { database } from "../firebaseConfig.js";
+import { database, auth } from "../firebaseConfig.js";
 import { useRef } from "react";
+
 
 function ItemPage() {
   const [foodItems, setFoodItems] = useState([]);
@@ -50,12 +51,13 @@ function ItemPage() {
   const [isUploading, setIsUploading] = useState(false); // To handle loading state during image upload
 
   // Assuming you have a user authentication system in place, get the current user's ID
-  const userId = "userId"; // Replace with dynamic user ID from Firebase Authentication (e.g., `auth.currentUser.uid`)
+const user = auth.currentUser;
+const userId = user ? user.uid : null;
 
   const alertedItemsRef = useRef(new Set()); // Store already alerted items
 
   useEffect(() => {
-    const foodItemsRef = ref(database, `foodItems/${userId}`);
+    const foodItemsRef = ref(database, `users/${userId}/foodItems`);
     onValue(foodItemsRef, (snapshot) => {
       const items = [];
       snapshot.forEach((childSnapshot) => {
@@ -107,9 +109,9 @@ function ItemPage() {
 
   const handleUpdateItem = (e) => {
     e.preventDefault();
-    if (!editItem) return;
-
-    const itemRef = ref(database, `foodItems/${userId}/${editItem.id}`);
+    if (!editingItem) return;
+  
+    const itemRef = ref(database, `users/${userId}/foodItems/${editingItem}`);
     update(itemRef, {
       name: newItem.name,
       quantity: parseInt(newItem.quantity),
@@ -117,13 +119,13 @@ function ItemPage() {
     })
       .then(() => {
         toast.success("Food item updated successfully!");
-        setNewItem({ name: "", quantity: "", expiryDate: null });
-        setEditItem(null);
+        setEditingItem(null);
       })
-      .catch((error) => {
-        toast.error("Failed to update item: " + error.message);
-      });
+      .catch((error) => toast.error("Failed to update item: " + error.message));
+  
+    setNewItem({ name: "", quantity: "", expiryDate: null });
   };
+  
 
   const getExpiryStatus = (expiryDate) => {
     if (!expiryDate)
@@ -151,51 +153,31 @@ function ItemPage() {
       toast.error("Please fill in all fields");
       return;
     }
-
+  
     const formattedExpiryDate = format(newItem.expiryDate, "yyyy/MM/dd");
-
-    if (editingItem) {
-      // If an item is being edited, update it
-      const itemRef = ref(database, `foodItems/${userId}/${editingItem}`);
-      update(itemRef, {
-        name: newItem.name,
-        quantity: parseInt(newItem.quantity),
-        expiryDate: formattedExpiryDate,
-      })
-        .then(() => {
-          toast.success("Food item updated successfully!");
-          setEditingItem(null);
-        })
-        .catch((error) => {
-          toast.error("Failed to update item: " + error.message);
-        });
-    } else {
-      // Otherwise, add a new item
-      const foodItemsRef = ref(database, `foodItems/${userId}`);
-      const newFoodItemRef = push(foodItemsRef);
-
-      set(newFoodItemRef, {
-        name: newItem.name,
-        quantity: parseInt(newItem.quantity),
-        expiryDate: formattedExpiryDate,
-      })
-        .then(() => {
-          toast.success("Food item added successfully!");
-        })
-        .catch((error) => {
-          toast.error("Failed to add food item: " + error.message);
-        });
-    }
-
-    // Clear form after saving
+    const foodItemsRef = ref(database, `users/${userId}/foodItems`);
+    const newFoodItemRef = push(foodItemsRef);
+  
+    set(newFoodItemRef, {
+      name: newItem.name,
+      quantity: parseInt(newItem.quantity),
+      expiryDate: formattedExpiryDate,
+    })
+      .then(() => toast.success("Food item added successfully!"))
+      .catch((error) => toast.error("Failed to add food item: " + error.message));
+  
     setNewItem({ name: "", quantity: "", expiryDate: null });
   };
+  
 
   // Handle deleting an item from Firebase
   const handleDeleteItem = (itemId) => {
-    const itemRef = ref(database, `foodItems/${userId}/${itemId}`);
-    set(itemRef, null);
+    const itemRef = ref(database, `users/${userId}/foodItems/${itemId}`);
+    set(itemRef, null)
+      .then(() => toast.success("Item deleted"))
+      .catch((error) => toast.error("Failed to delete item: " + error.message));
   };
+  
 
   // Handle image upload and expiry date extraction
   const handleImageUpload = async (event) => {
