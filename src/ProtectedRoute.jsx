@@ -6,7 +6,7 @@ const ProtectedRoute = ({ requiredRole }) => {
 
   if (loading) return <div>Loading...</div>; // Show loading while checking auth state
 
-  if (!user) return <Navigate to="/auth" />; // Redirect to login if user is not authenticated
+  if (!user) return <Navigate to="/role" />; // Redirect to login if user is not authenticated
   // Check if a specific role is required, if so, and the user doesn't have it
   if (requiredRole && role !== requiredRole) {
     return <Navigate to="/unauthorized" />; // Redirect if the role doesn't match

@@ -1,13 +1,18 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '@/firebaseConfig';
+import { ref, get } from 'firebase/database';
+import { auth, database } from '@/firebaseConfig';
 
+const roles = {
+  ADMIN: 'admin',
+  NGO: 'ngo',
+  USER: 'user',
+};
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [role, setRole] = useState(null); // 'ngo' or 'user'
+  const [role, setRole] = useState(null); // 'admin', 'ngo', or 'user'
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,10 +21,22 @@ export const UserProvider = ({ children }) => {
       setUser(user);
 
       if (user) {
-        // Fetch user data from Firestore to determine role
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setRole(userDoc.data().isNgo ? 'ngo' : 'user');
+        // Fetch user data from Realtime Database to determine role
+        const userRef = ref(database, `users/${user.uid}`);
+        const userSnapshot = await get(userRef);
+        if (userSnapshot.exists()) {
+          const userData = userSnapshot.val();
+          setRole(userData.role);
+        } else {
+          // Check if the user is an NGO
+          const ngoRef = ref(database, `ngos/${user.uid}`);
+          const ngoSnapshot = await get(ngoRef);
+          if (ngoSnapshot.exists()) {
+            const ngoData = ngoSnapshot.val();
+            setRole(ngoData.role);
+          } else {
+            setRole(null);
+          }
         }
       } else {
         setRole(null);

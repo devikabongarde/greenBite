@@ -16,10 +16,12 @@ import Ngodonations from './pages/DonationPage';
 import NotFound from './pages/NotFound';
 import ProtectedRoute from './ProtectedRoute';
 import NGOPage from './pages/NGOPage';
+import RoleSelection from './pages/RoleSelection';
 
 
 const router = createBrowserRouter([
   { path: '/', element: <HomePage /> },
+  { path: '/role', element: <RoleSelection /> },
   { path: '/auth', element: <AuthPage /> },
   {
     path: '/', element : <ProtectedRoute/>,
@@ -36,6 +38,7 @@ const router = createBrowserRouter([
       { path: 'docs', element: <Documentation /> },
       { path: 'about', element: <About /> },
       { path: 'account', element: <Account /> },
+      
     ],
   },
   {

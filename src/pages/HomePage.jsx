@@ -46,7 +46,7 @@ export default function HomePage() {
                   </div>
                   <div className="space-x-4">
                     <Button>
-                      <Link to={user ? "/dashboard" : "/auth"}>
+                      <Link to={user ? "/dashboard" : "/role"}>
                         Get Started
                       </Link>
                     </Button>

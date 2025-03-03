@@ -105,7 +105,7 @@ export function NavUser() {
                 </DropdownMenuItem>
               </>
             ) : (
-              <DropdownMenuItem onClick={() => navigate('/auth')}>
+              <DropdownMenuItem onClick={() => navigate('/role')}>
                 <LogOut className="mr-2" />
                 Log in
               </DropdownMenuItem>

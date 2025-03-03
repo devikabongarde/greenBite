@@ -10,18 +10,24 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { auth, database, provider } from "@/firebaseConfig"; // Use the correct reference for Realtime Database
+import { auth, database, provider } from "@/firebaseConfig";
 import { signInWithPopup } from "firebase/auth";
-import { ref, set } from "firebase/database"; // Correct import for Realtime Database
+import { ref, set, get } from "firebase/database";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const AuthPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isNgo = location.state?.isNgo || false; // Determine if signing up as NGO
   const [isLoading, setIsLoading] = useState(false);
-  const [isNgo, setIsNgo] = useState(false); // Track if the user is an NGO
+  const roles = {
+    ADMIN: 'admin',
+    NGO: 'ngo',
+    USER: 'user',
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -32,13 +38,19 @@ const AuthPage = () => {
     const password = formData.get("password");
 
     try {
-      // Attempt to sign in the user
       const result = await signIn(email, password);
-      console.log("Logged in:", result);
-      toast.success("Logged in successfully");
-      setTimeout(() => navigate(isNgo ? "/" : "/"), 1000);
+      const user = result.user;
+      const userRef = ref(database, `${isNgo ? "ngos" : "users"}/${user.uid}`);
+      const userData = await get(userRef);
+      if (userData.exists()) {
+        // Set user data in application state (e.g., using context or state management library)
+        // Example: setUser(userData.val());
+        toast.success("Logged in successfully");
+        setTimeout(() => navigate(isNgo ? "/ngo-dashboard" : "/dashboard"), 1000);
+      } else {
+        toast.error("User data not found");
+      }
     } catch (err) {
-      console.log("Error:", err);
       toast.error("Invalid email or password");
     } finally {
       setIsLoading(false);
@@ -50,11 +62,11 @@ const AuthPage = () => {
     setIsLoading(true);
 
     const formData = new FormData(e.target);
+    const name = formData.get("name");
     const email = formData.get("email");
     const password = formData.get("password");
     const confirmPassword = formData.get("confirmPassword");
 
-    // Check for matching passwords
     if (password !== confirmPassword) {
       toast.error("Passwords do not match");
       setIsLoading(false);
@@ -64,65 +76,61 @@ const AuthPage = () => {
     try {
       const result = await signUp(email, password);
       const user = result.user;
-
-      // Correct Realtime Database usage: Use the `database` reference here
       const userRef = ref(database, `${isNgo ? "ngos" : "users"}/${user.uid}`);
       await set(userRef, {
+        name,
         email: user.email,
         userId: user.uid,
-        isNgo: isNgo, // Save if user is an NGO or not
-        createdAt: new Date().toISOString(),  // You can store a date string
+        role: isNgo ? roles.NGO : roles.USER, // Set role based on isNgo
+        createdAt: new Date().toISOString(),
       });
-
       toast.success("Account created successfully");
-      navigate(isNgo ? "/" : "/");
+      navigate(isNgo ? "/ngo-dashboard" : "/dashboard");
     } catch (err) {
-      console.log("Sign up error:", err);
       toast.error("Failed to create account");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    // Implement Google Sign-In logic here
-    // Implement Google Sign-In logic here
+  const handleGoogleLogin = async () => {
     setIsLoading(true);
-
     try {
-       const result = await signInWithPopup(auth, provider);
-       const user = result.user;
-
-       // Correct Realtime Database usage: Use the `database` reference here
-       const userRef = ref(
-          database,
-          `${isNgo ? "ngos" : "users"}/${user.uid}`
-       );
-       await set(userRef, {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      const userRef = ref(database, `${isNgo ? "ngos" : "users"}/${user.uid}`);
+      const userData = await get(userRef);
+      if (userData.exists()) {
+        // Set user data in application state (e.g., using context or state management library)
+        // Example: setUser(userData.val());
+        toast.success("Logged in with Google successfully");
+        navigate(isNgo ? "/ngo-dashboard" : "/dashboard");
+      } else {
+        await set(userRef, {
+          name: user.displayName,
           email: user.email,
           userId: user.uid,
-isNgo: isNgo, // Save if user is an NGO or not
-          createdAt: new Date().toISOString(), // You can store a date string
-       });
-       console.log("result: ", result);
-
-       toast.success("Account created successfully");
-       navigate(isNgo ? "/donations" : "/dashboard");
+          role: isNgo ? roles.NGO : roles.USER, // Set role based on isNgo
+          createdAt: new Date().toISOString(),
+        });
+        toast.success("Logged in with Google successfully");
+        navigate(isNgo ? "/ngo-dashboard" : "/dashboard");
+      }
     } catch (err) {
-       console.log("Sign up error:", err);
-       toast.error("Failed to create account");
+      toast.error("Failed to login with Google");
     } finally {
-       setIsLoading(false);
+      setIsLoading(false);
     }
-    console.log("Google Sign-In clicked");
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Welcome</CardTitle>
-          <CardDescription>Sign in to your account or create a new one</CardDescription>
+          <CardTitle>{isNgo ? "NGO Authentication" : "User Authentication"}</CardTitle>
+          <CardDescription>
+            {isNgo ? "Manage NGO donations and activities." : "Access user features."}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
@@ -132,115 +140,37 @@ isNgo: isNgo, // Save if user is an NGO or not
             </TabsList>
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
-                  <Input
-                    id="login-email"
-                    name="email"
-                    type="email"
-                    placeholder="devi@greenbite.com"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
-                  <Input
-                    id="login-password"
-                    name="password"
-                    type="password"
-                    required
-                  />
-                </div>
-                <Button className="w-full" type="submit" disabled={isLoading}>
+                <Label>Email</Label>
+                <Input name="email" type="email" required />
+                <Label>Password</Label>
+                <Input name="password" type="password" required />
+                <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Please wait..." : "Login"}
+                </Button>
+                <Button type="button" className="w-full mt-4" onClick={handleGoogleLogin} disabled={isLoading}>
+                  {isLoading ? "Please wait..." : "Login with Google"}
                 </Button>
               </form>
             </TabsContent>
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    name="email"
-                    type="email"
-                    placeholder="devi@greenbite.com"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    name="password"
-                    type="password"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-confirm-password">Confirm Password</Label>
-                  <Input
-                    id="signup-confirm-password"
-                    name="confirmPassword"
-                    type="password"
-                    required
-                  />
-                </div>
-
-                {/* NGO Toggle with Switch */}
-                <div className="flex items-center space-x-4 mt-4">
-                  <Label htmlFor="isNgo" className="text-sm">
-                    Sign up as an NGO
-                  </Label>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      id="isNgo"
-                      checked={isNgo}
-                      onChange={(e) => setIsNgo(e.target.checked)}
-                      className="sr-only"
-                    />
-                    <span
-                      className={`w-11 h-6 flex items-center justify-between bg-gray-200 rounded-full p-1 transition-all duration-300 ease-in-out ${
-                        isNgo ? "bg-green-500" : "bg-gray-300"
-                      }`}
-                    >
-                      <span
-                        className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-all duration-300 ease-in-out ${
-                          isNgo ? "translate-x-5" : "translate-x-1"
-                        }`}
-                      ></span>
-                    </span>
-                  </label>
-                </div>
-
-                <Button className="w-full" type="submit" disabled={isLoading}>
+                <Label>{isNgo ? "NGO Name" : "Full Name"}</Label>
+                <Input name="name" type="text" required />
+                <Label>Email</Label>
+                <Input name="email" type="email" required />
+                <Label>Password</Label>
+                <Input name="password" type="password" required />
+                <Label>Confirm Password</Label>
+                <Input name="confirmPassword" type="password" required />
+                <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Please wait..." : "Sign Up"}
+                </Button>
+                <Button type="button" className="w-full mt-4" onClick={handleGoogleLogin} disabled={isLoading}>
+                  {isLoading ? "Please wait..." : "Sign Up with Google"}
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
-
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with
-                </span>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              type="button"
-              className="w-full mt-4"
-              onClick={handleGoogleSignIn}
-            >
-              Google
-            </Button>
-          </div>
         </CardContent>
       </Card>
       <ToastContainer position="top-center" />
