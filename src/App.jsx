@@ -1,6 +1,9 @@
 import { UserProvider } from '@/UserContext.jsx';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { Suspense } from 'react';
 
+
+import Loading from './components/Loading';
 import About from './pages/About';
 import Account from './pages/Account';
 import Achievements from './pages/Achievements';
@@ -18,40 +21,47 @@ import ProtectedRoute from './ProtectedRoute';
 import NGOPage from './pages/NGOPage';
 import RoleSelection from './pages/RoleSelection';
 
-
 const router = createBrowserRouter([
   { path: '/', element: <HomePage /> },
   { path: '/role', element: <RoleSelection /> },
   { path: '/auth', element: <AuthPage /> },
   {
-    path: '/', element : <ProtectedRoute/>,
-
+    path: '/',
+    element: <ProtectedRoute />,
+    element: <Loading />, 
     children: [
-      { path: 'items', element: <ItemPage /> },
-      { path: 'help', element: <Help /> },
-      { path: 'ngo', element: <NGOPage /> },
-      { path: 'dashboard', element: <Dashboard /> },
-      { path: 'achievements', element: <Achievements /> },
-      { path: 'donations', element: <Ngodonations /> },
-      { path: 'crowdfunding', element: <Crowdfunding /> },
-      { path: 'chatbot', element: <Chatbot /> },
-      { path: 'docs', element: <Documentation /> },
-      { path: 'about', element: <About /> },
-      { path: 'account', element: <Account /> },
-      
+      {
+        
+        children: [
+          { path: 'items', element: <ItemPage /> },
+          { path: 'help', element: <Help /> },
+          { path: 'ngo', element: <NGOPage /> },
+          { path: 'dashboard', element: <Dashboard /> },
+          { path: 'achievements', element: <Achievements /> },
+          { path: 'donations', element: <Ngodonations /> },
+          { path: 'crowdfunding', element: <Crowdfunding /> },
+          { path: 'chatbot', element: <Chatbot /> },
+          { path: 'docs', element: <Documentation /> },
+          { path: 'about', element: <About /> },
+          { path: 'account', element: <Account /> },
+        ],
+      },
     ],
   },
   {
-    path: '*', // this will match any other undefined paths
-    element: <NotFound /> // 404 page will show
-  }
+    path: '*',
+    element: <NotFound />,
+  },
 ]);
 
 function App() {
   return (
-    <UserProvider>
-      <RouterProvider router={router} />
-    </UserProvider>
+   
+
+<UserProvider>
+    <RouterProvider router={router} />
+</UserProvider>
+
   );
 }
 

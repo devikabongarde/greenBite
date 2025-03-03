@@ -46,7 +46,7 @@ const AuthPage = () => {
         // Set user data in application state (e.g., using context or state management library)
         // Example: setUser(userData.val());
         toast.success("Logged in successfully");
-        setTimeout(() => navigate(isNgo ? "/ngo-dashboard" : "/dashboard"), 1000);
+        setTimeout(() => navigate(isNgo ? "/ngo" : "/dashboard"), 1000);
       } else {
         toast.error("User data not found");
       }
