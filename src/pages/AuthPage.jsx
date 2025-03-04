@@ -85,7 +85,7 @@ const AuthPage = () => {
         createdAt: new Date().toISOString(),
       });
       toast.success("Account created successfully");
-      navigate(isNgo ? "/ngo-dashboard" : "/dashboard");
+      navigate(isNgo ? "/ngo" : "/dashboard");
     } catch (err) {
       toast.error("Failed to create account");
     } finally {
@@ -104,7 +104,7 @@ const AuthPage = () => {
         // Set user data in application state (e.g., using context or state management library)
         // Example: setUser(userData.val());
         toast.success("Logged in with Google successfully");
-        navigate(isNgo ? "/ngo-dashboard" : "/dashboard");
+        navigate(isNgo ? "/ngo" : "/dashboard");
       } else {
         await set(userRef, {
           name: user.displayName,
@@ -114,7 +114,7 @@ const AuthPage = () => {
           createdAt: new Date().toISOString(),
         });
         toast.success("Logged in with Google successfully");
-        navigate(isNgo ? "/ngo-dashboard" : "/dashboard");
+        navigate(isNgo ? "/ngo" : "/dashboard");
       }
     } catch (err) {
       toast.error("Failed to login with Google");
