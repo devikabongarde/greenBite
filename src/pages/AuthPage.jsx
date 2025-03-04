@@ -40,7 +40,17 @@ const AuthPage = () => {
     try {
       const result = await signIn(email, password);
       const user = result.user;
+      if (isNgo) {
+        const pendingNgoRef = ref(database, `pendingNgos/${user.uid}`);
+        const ngoData = await get(pendingNgoRef);
+        if (!ngoData.exists() || !ngoData.val().approved) {
+          toast.error("Your NGO registration is pending approval.");
+          setIsLoading(false);
+          return;
+        }
+      }
       const userRef = ref(database, `${isNgo ? "ngos" : "users"}/${user.uid}`);
+      
       const userData = await get(userRef);
       if (userData.exists()) {
         // Set user data in application state (e.g., using context or state management library)
@@ -76,14 +86,30 @@ const AuthPage = () => {
     try {
       const result = await signUp(email, password);
       const user = result.user;
-      const userRef = ref(database, `${isNgo ? "ngos" : "users"}/${user.uid}`);
-      await set(userRef, {
-        name,
-        email: user.email,
-        userId: user.uid,
-        role: isNgo ? roles.NGO : roles.USER, // Set role based on isNgo
-        createdAt: new Date().toISOString(),
-      });
+      if (isNgo) {
+        const pendingNgoRef = ref(database, `pendingNgos/${user.uid}`);
+        await set(pendingNgoRef, {
+          name,
+          email: user.email,
+          userId: user.uid,
+          role: roles.NGO,
+          createdAt: new Date().toISOString(),
+          approved: false, // Admin needs to approve
+        });
+        toast.success("NGO registration request sent. Please wait for admin approval.");
+      } else {
+        const userRef = ref(database, `users/${user.uid}`);
+        await set(userRef, {
+          name,
+          email: user.email,
+          userId: user.uid,
+          role: roles.USER,
+          createdAt: new Date().toISOString(),
+        });
+        toast.success("User account created successfully.");
+        navigate("/dashboard");
+      }
+      
       toast.success("Account created successfully");
       navigate(isNgo ? "/ngo" : "/dashboard");
     } catch (err) {
@@ -99,22 +125,42 @@ const AuthPage = () => {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       const userRef = ref(database, `${isNgo ? "ngos" : "users"}/${user.uid}`);
-      const userData = await get(userRef);
-      if (userData.exists()) {
-        // Set user data in application state (e.g., using context or state management library)
-        // Example: setUser(userData.val());
-        toast.success("Logged in with Google successfully");
-        navigate(isNgo ? "/ngo" : "/dashboard");
+      const pendingNgoRef = ref(database, `pendingNgos/${user.uid}`);
+  
+      if (isNgo) {
+        const ngoData = await get(userRef);
+        if (ngoData.exists() && ngoData.val().approved) {
+          toast.success("Logged in with Google successfully");
+          navigate("/ngo");
+        } else {
+          // Check if already in pending list
+          const pendingData = await get(pendingNgoRef);
+          if (!pendingData.exists()) {
+            await set(pendingNgoRef, {
+              name: user.displayName,
+              email: user.email,
+              userId: user.uid,
+              role: roles.NGO,
+              createdAt: new Date().toISOString(),
+              approved: false, // Admin approval required
+            });
+          }
+          toast.error("Your NGO registration is pending approval.");
+        }
       } else {
-        await set(userRef, {
-          name: user.displayName,
-          email: user.email,
-          userId: user.uid,
-          role: isNgo ? roles.NGO : roles.USER, // Set role based on isNgo
-          createdAt: new Date().toISOString(),
-        });
+        // Handle normal users
+        const userData = await get(userRef);
+        if (!userData.exists()) {
+          await set(userRef, {
+            name: user.displayName,
+            email: user.email,
+            userId: user.uid,
+            role: roles.USER,
+            createdAt: new Date().toISOString(),
+          });
+        }
         toast.success("Logged in with Google successfully");
-        navigate(isNgo ? "/ngo" : "/dashboard");
+        navigate("/dashboard");
       }
     } catch (err) {
       toast.error("Failed to login with Google");
@@ -122,6 +168,7 @@ const AuthPage = () => {
       setIsLoading(false);
     }
   };
+  
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
